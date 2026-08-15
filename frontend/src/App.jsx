@@ -26,6 +26,7 @@ import ProtectedRoute
 import MainLayout
     from "./layouts/MainLayout";
 
+ import BookDetail from "./pages/BookDetail";
 
 function Home() {
 
@@ -92,6 +93,11 @@ function App() {
                           path="/books"
                           element={<Books />}
                      />
+
+                     <Route
+                          path="/books/:id"
+                          element={<BookDetail />}
+                      />
 
                     {/* MEMBER */}
 

@@ -1,6 +1,13 @@
-import { useEffect, useState } from "react";
+import {
+    useEffect,
+    useState
+} from "react";
 
-import { getBooksApi } from "../api/bookApi";
+import { Link } from "react-router-dom";
+
+import {
+    getBooksApi
+} from "../api/bookApi";
 
 function Books() {
 
@@ -287,6 +294,12 @@ function Books() {
                                 Có sẵn:{" "}
                                 {book.availableQuantity}
                             </p>
+                         
+                         
+                            <Link to={`/books/${book._id}`}>
+                                Xem chi tiết
+                            </Link>
+
 
                         </div>
 
