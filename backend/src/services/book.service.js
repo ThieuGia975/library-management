@@ -134,23 +134,106 @@ const getBookById = async (id) => {
     return book;
 };
 
-const updateBook = async (id, data) => {
-    const book = await Book.findById(id);
+const updateBook = async (bookId, data) => {
+
+    const book = await Book.findById(bookId);
 
     if (!book) {
         throw new Error("Book not found");
     }
 
-    const updatedBook = await Book.findByIdAndUpdate(
-        id,
-        data,
-        {
-            new: true,
-            runValidators: true
-        }
-    );
+    // =========================
+    // CHECK ISBN
+    // =========================
 
-    return updatedBook;
+    if (data.isbn !== undefined) {
+
+        const existingBook = await Book.findOne({
+            isbn: data.isbn,
+            _id: { $ne: bookId }
+        });
+
+        if (existingBook) {
+            throw new Error("ISBN already exists");
+        }
+
+        book.isbn = data.isbn;
+    }
+
+
+    // =========================
+    // UPDATE QUANTITY
+    // =========================
+
+    if (data.quantity !== undefined) {
+
+        const newQuantity = Number(data.quantity);
+
+        if (
+            !Number.isInteger(newQuantity) ||
+            newQuantity < 0
+        ) {
+            throw new Error(
+                "Quantity must be a non-negative integer"
+            );
+        }
+
+        // Số sách hiện đang được mượn
+        const borrowedQuantity =
+            book.quantity - book.availableQuantity;
+
+
+        // Không được giảm tổng số sách
+        // xuống thấp hơn số đang được mượn
+        if (newQuantity < borrowedQuantity) {
+
+            throw new Error(
+                `Quantity cannot be less than borrowed quantity (${borrowedQuantity})`
+            );
+        }
+
+
+        book.quantity = newQuantity;
+
+        book.availableQuantity =
+            newQuantity - borrowedQuantity;
+    }
+
+
+    // =========================
+    // UPDATE OTHER FIELDS
+    // =========================
+
+    if (data.title !== undefined) {
+        book.title = data.title;
+    }
+
+    if (data.author !== undefined) {
+        book.author = data.author;
+    }
+
+    if (data.category !== undefined) {
+        book.category = data.category;
+    }
+
+    if (data.publisher !== undefined) {
+        book.publisher = data.publisher;
+    }
+
+    if (data.publishedYear !== undefined) {
+        book.publishedYear = data.publishedYear;
+    }
+
+    if (data.description !== undefined) {
+        book.description = data.description;
+    }
+
+    if (data.coverImage !== undefined) {
+        book.coverImage = data.coverImage;
+    }
+
+
+    return await book.save();
 };
 
 const deleteBook = async (id) => {
