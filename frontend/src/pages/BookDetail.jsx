@@ -79,6 +79,50 @@ function BookDetail() {
 
     }, [id]);
 
+    const handleBorrow = async () => {
+
+    try {
+
+        setBorrowing(true);
+
+        setBorrowMessage("");
+
+        setBorrowError("");
+
+        const response =
+            await borrowBookApi(book._id);
+
+        setBorrowMessage(
+            response.message ||
+            "Mượn sách thành công"
+        );
+
+        // Cập nhật số lượng sách
+        setBook((currentBook) => ({
+            ...currentBook,
+
+            availableQuantity:
+                currentBook.availableQuantity - 1
+        }));
+
+    } catch (error) {
+
+        console.error(
+            "Borrow book error:",
+            error
+        );
+
+        setBorrowError(
+            error.response?.data?.message ||
+            "Không thể mượn sách"
+        );
+
+    } finally {
+
+        setBorrowing(false);
+
+    }
+};
 
     if (loading) {
 
@@ -132,50 +176,6 @@ function BookDetail() {
 
     }
 
-    const handleBorrow = async () => {
-
-    try {
-
-        setBorrowing(true);
-
-        setBorrowMessage("");
-
-        setBorrowError("");
-
-        const response =
-            await borrowBookApi(book._id);
-
-        setBorrowMessage(
-            response.message ||
-            "Mượn sách thành công"
-        );
-
-        // Cập nhật số lượng sách
-        setBook((currentBook) => ({
-            ...currentBook,
-
-            availableQuantity:
-                currentBook.availableQuantity - 1
-        }));
-
-    } catch (error) {
-
-        console.error(
-            "Borrow book error:",
-            error
-        );
-
-        setBorrowError(
-            error.response?.data?.message ||
-            "Không thể mượn sách"
-        );
-
-    } finally {
-
-        setBorrowing(false);
-
-    }
-};
 
     return (
 

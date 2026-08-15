@@ -1,3 +1,5 @@
+import MyBorrowings from "./pages/MyBorrowings";
+
 import {
     BrowserRouter,
     Routes,
@@ -115,6 +117,13 @@ function App() {
                             path="/member"
                             element={
                                 <MemberDashboard />
+                            }
+                        />
+
+                        <Route
+                            path="/my-borrowings"
+                            element={
+                                <MyBorrowings />
                             }
                         />
 

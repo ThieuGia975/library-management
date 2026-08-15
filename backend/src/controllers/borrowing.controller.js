@@ -85,7 +85,7 @@ const getMyBorrowings = async (req, res) => {
 
     } catch (error) {
 
-        res.status(500).json({
+        res.status(400).json({
             success: false,
             message: error.message
         });
@@ -111,5 +111,5 @@ module.exports = {
     createBorrowing,
     getAllBorrowings,
     returnBorrowing,
-    getMyBorrowings
+    getMyBorrowings,
 };
