@@ -24,6 +24,8 @@ const createBorrowing = async (req, res) => {
 const getAllBorrowings = async (req, res) => {
     try {
 
+        await borrowingService.updateOverdueBorrowings();
+
         const borrowings =
             await borrowingService.getAllBorrowings();
 
@@ -86,6 +88,19 @@ const getMyBorrowings = async (req, res) => {
         res.status(500).json({
             success: false,
             message: error.message
+        });
+
+    await updateOverdueBorrowings();
+
+    return await Borrowing.find({
+        user: userId
+    })
+        .populate(
+            "book",
+            "title author isbn category coverImage"
+        )
+        .sort({
+            createdAt: -1
         });
 
     }

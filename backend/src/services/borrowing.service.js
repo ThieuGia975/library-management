@@ -128,20 +128,41 @@ const returnBorrowing = async (
     const returnDate = new Date();
 
     // 6. Tính tiền phạt
-    let fine = 0;
+   let fine = 0;
 
     if (returnDate > borrowing.dueDate) {
 
-        const diffTime =
+      /*  const diffTime =
             returnDate.getTime() -
             borrowing.dueDate.getTime();
 
         const overdueDays = Math.ceil(
             diffTime /
             (1000 * 60 * 60 * 24)
+        ); */
+        const dueDate = new Date(borrowing.dueDate);
+        const returnDate = new Date();
+
+        dueDate.setHours(0, 0, 0, 0);
+        returnDate.setHours(0, 0, 0, 0);
+
+        const diffTime =
+            returnDate.getTime() -
+            dueDate.getTime();
+
+        const overdueDays = Math.max(
+            0,
+            Math.floor(
+                diffTime /
+                (1000 * 60 * 60 * 24)
+            )
         );
 
-        fine = overdueDays * 10000;
+//
+        const finePerDay =
+            Number(process.env.FINE_PER_DAY || 10000);
+
+        fine = overdueDays * finePerDay;
     }
 
     // 7. Cập nhật borrowing
@@ -183,10 +204,33 @@ const getMyBorrowings = async (userId) => {
         });
 };
 
+const updateOverdueBorrowings = async () => {
+
+    const now = new Date();
+
+    const result =
+        await Borrowing.updateMany(
+            {
+                status: "BORROWED",
+                dueDate: {
+                    $lt: now
+                }
+            },
+            {
+                $set: {
+                    status: "OVERDUE"
+                }
+            }
+        );
+
+    return result;
+};
+
 
 module.exports = {
     createBorrowing,
     getAllBorrowings,
     returnBorrowing,
-    getMyBorrowings
+    getMyBorrowings,
+    updateOverdueBorrowings
 };
