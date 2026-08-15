@@ -17,12 +17,108 @@ const createBook = async (data) => {
     return book;
 };
 
-const getAllBooks = async () => {
-    return await Book.find({
+const getAllBooks = async ({
+    search,
+    category,
+    author,
+    available,
+    page = 1,
+    limit = 10
+}) => {
+
+    const query = {
         isActive: true
-    }).sort({
-        createdAt: -1
-    });
+    };
+
+    // Search
+    if (search) {
+        query.$or = [
+            {
+                title: {
+                    $regex: search,
+                    $options: "i"
+                }
+            },
+            {
+                author: {
+                    $regex: search,
+                    $options: "i"
+                }
+            },
+            {
+                isbn: {
+                    $regex: search,
+                    $options: "i"
+                }
+            },
+            {
+                category: {
+                    $regex: search,
+                    $options: "i"
+                }
+            }
+        ];
+    }
+
+    // Category
+    if (category) {
+        query.category = {
+            $regex: category,
+            $options: "i"
+        };
+    }
+
+    // Author
+    if (author) {
+        query.author = {
+            $regex: author,
+            $options: "i"
+        };
+    }
+
+    // Availability
+    if (available === "true") {
+        query.availableQuantity = {
+            $gt: 0
+        };
+    }
+
+    const pageNumber = Math.max(
+        Number(page),
+        1
+    );
+
+    const limitNumber = Math.min(
+        Math.max(Number(limit), 1),
+        50
+    );
+
+    const skip =
+        (pageNumber - 1) * limitNumber;
+
+    const [books, total] =
+        await Promise.all([
+            Book.find(query)
+                .sort({
+                    createdAt: -1
+                })
+                .skip(skip)
+                .limit(limitNumber),
+
+            Book.countDocuments(query)
+        ]);
+
+    return {
+        books,
+        pagination: {
+            page: pageNumber,
+            limit: limitNumber,
+            total,
+            totalPages: Math.ceil(
+                total / limitNumber
+            )
+        }
+    };
 };
 
 const getBookById = async (id) => {

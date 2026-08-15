@@ -18,18 +18,41 @@ const createBook = async (req, res) => {
 };
 
 const getAllBooks = async (req, res) => {
+
     try {
-        const books = await bookService.getAllBooks();
+
+        const {
+            search,
+            category,
+            author,
+            available,
+            page,
+            limit
+        } = req.query;
+
+        const result =
+            await bookService.getAllBooks({
+                search,
+                category,
+                author,
+                available,
+                page,
+                limit
+            });
 
         res.status(200).json({
             success: true,
-            data: books
+            data: result.books,
+            pagination: result.pagination
         });
+
     } catch (error) {
+
         res.status(500).json({
             success: false,
             message: error.message
         });
+
     }
 };
 
