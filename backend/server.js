@@ -6,6 +6,7 @@ require("dotenv").config();
 const connectDB = require("./src/config/database");
 const healthRoutes = require("./src/routes/health.routes");
 const authRoutes = require("./src/routes/auth.routes");
+const bookRoutes = require("./src/routes/book.routes");
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use(express.json());
 
 app.use("/api/health", healthRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/books", bookRoutes);
 
 app.get("/", (req, res) => {
     res.json({
