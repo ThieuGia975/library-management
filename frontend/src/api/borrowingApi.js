@@ -31,3 +31,9 @@ export const returnBorrowingApi = async (borrowingId) => {
 
     return response.data;
 };
+
+export const getAllBorrowingsApi = async () => {
+    const response = await api.get("/borrowings");
+
+    return response.data;
+};

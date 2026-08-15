@@ -1,4 +1,5 @@
 import { useAuth } from "../context/AuthContext";
+import { Link } from "react-router-dom";
 
 function LibrarianDashboard() {
 
@@ -19,6 +20,9 @@ function LibrarianDashboard() {
                 Role: {user?.role}
             </p>
 
+            <Link to="/librarian/borrowings">
+                📚 Quản lý lượt mượn
+            </Link>
         </div>
     );
 }

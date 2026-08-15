@@ -30,6 +30,9 @@ import MainLayout
 
  import BookDetail from "./pages/BookDetail";
 
+ import LibrarianBorrowings
+    from "./pages/LibrarianBorrowings";
+
 function Home() {
 
     return (
@@ -132,25 +135,32 @@ function App() {
 
                     {/* LIBRARIAN */}
 
-                    <Route
-                        element={
-                            <ProtectedRoute
-                                allowedRoles={[
-                                    "LIBRARIAN",
-                                    "ADMIN"
-                                ]}
-                            />
-                        }
-                    >
+                     <Route
+                      element={
+                          <ProtectedRoute
+                              allowedRoles={[
+                                  "LIBRARIAN",
+                                  "ADMIN"
+                              ]}
+                          />
+                      }
+                  >
 
-                        <Route
-                            path="/librarian"
-                            element={
-                                <LibrarianDashboard />
-                            }
-                        />
+                      <Route
+                          path="/librarian"
+                          element={
+                              <LibrarianDashboard />
+                          }
+                      />
 
-                    </Route>
+                      <Route
+                          path="/librarian/borrowings"
+                          element={
+                              <LibrarianBorrowings />
+                          }
+                      />
+
+                  </Route>
 
 
                     {/* ADMIN */}
