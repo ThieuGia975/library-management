@@ -9,6 +9,11 @@ import {
     getBookByIdApi
 } from "../api/bookApi";
 
+import { useAuth } from "../context/AuthContext";
+
+import {
+    borrowBookApi
+} from "../api/borrowingApi";
 
 function BookDetail() {
 
@@ -19,6 +24,21 @@ function BookDetail() {
     const [loading, setLoading] = useState(true);
 
     const [error, setError] = useState("");
+
+    const { user } = useAuth();
+
+    console.log("========== AUTH DEBUG ==========");
+    console.log("User:", user);
+    console.log("User role:", user?.role);
+    console.log("Is MEMBER:", user?.role === "MEMBER");
+    console.log("Token:", localStorage.getItem("token"));
+    console.log("================================");
+
+    const [borrowing, setBorrowing] = useState(false);
+
+    const [borrowMessage, setBorrowMessage] = useState("");
+
+    const [borrowError, setBorrowError] = useState("");
 
 
     useEffect(() => {
@@ -112,6 +132,50 @@ function BookDetail() {
 
     }
 
+    const handleBorrow = async () => {
+
+    try {
+
+        setBorrowing(true);
+
+        setBorrowMessage("");
+
+        setBorrowError("");
+
+        const response =
+            await borrowBookApi(book._id);
+
+        setBorrowMessage(
+            response.message ||
+            "Mượn sách thành công"
+        );
+
+        // Cập nhật số lượng sách
+        setBook((currentBook) => ({
+            ...currentBook,
+
+            availableQuantity:
+                currentBook.availableQuantity - 1
+        }));
+
+    } catch (error) {
+
+        console.error(
+            "Borrow book error:",
+            error
+        );
+
+        setBorrowError(
+            error.response?.data?.message ||
+            "Không thể mượn sách"
+        );
+
+    } finally {
+
+        setBorrowing(false);
+
+    }
+};
 
     return (
 
@@ -202,16 +266,43 @@ function BookDetail() {
                 )}
 
 
-                {book.availableQuantity > 0 ? (
+            {user?.role === "MEMBER" && (
+                
+                book.availableQuantity > 0 ? (
 
-                    <button>
-                        Mượn sách
+                    <button
+                        onClick={handleBorrow}
+                        disabled={borrowing}
+                    >
+
+                        {borrowing
+                            ? "Đang xử lý..."
+                            : "Mượn sách"}
+
                     </button>
 
                 ) : (
 
                     <p>
                         Sách hiện đã hết.
+                    </p>
+
+                )
+
+            )}
+
+            {borrowMessage && (
+
+                    <p style={{ color: "green" }}>
+                        {borrowMessage}
+                    </p>
+
+                )}
+
+            {borrowError && (
+
+                    <p style={{ color: "red" }}>
+                        {borrowError}
                     </p>
 
                 )}

@@ -4,8 +4,7 @@ const Book = require("../models/Book");
 
 const createBorrowing = async ({
     userId,
-    bookId,
-    dueDate
+    bookId
 }) => {
 
     const user = await User.findOne({
@@ -44,12 +43,25 @@ const createBorrowing = async ({
         );
     }
 
+    // Ngày mượn
+    const borrowDate = new Date();
+
+    // Hạn trả: 7 ngày kể từ ngày mượn
+    const dueDate = new Date(borrowDate);
+
+    dueDate.setDate(
+        dueDate.getDate() + 7
+    );
+
     const borrowing = await Borrowing.create({
         user: userId,
         book: bookId,
-        dueDate
+        borrowDate,
+        dueDate,
+        status: "BORROWED"
     });
 
+    // Giảm số sách có thể mượn
     book.availableQuantity -= 1;
 
     await book.save();
