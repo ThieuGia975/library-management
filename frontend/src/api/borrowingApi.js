@@ -22,3 +22,12 @@ export const getMyBorrowingsApi = async () => {
 
     return response.data;
 };
+
+export const returnBorrowingApi = async (borrowingId) => {
+
+    const response = await api.post(
+        `/borrowings/${borrowingId}/return`
+    );
+
+    return response.data;
+};

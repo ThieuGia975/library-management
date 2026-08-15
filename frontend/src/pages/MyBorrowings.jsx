@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import {
-    getMyBorrowingsApi
+    getMyBorrowingsApi,
+    returnBorrowingApi
 } from "../api/borrowingApi";
 
 
@@ -15,6 +16,11 @@ function MyBorrowings() {
 
     const [error, setError] = useState("");
 
+    const [returningId, setReturningId] = useState(null);
+
+    const [returnMessage, setReturnMessage] = useState("");
+
+    const [returnError, setReturnError] = useState("");
 
     useEffect(() => {
 
@@ -57,6 +63,68 @@ function MyBorrowings() {
 
     }, []);
 
+    const handleReturn = async (borrowingId) => {
+
+    const confirmed = window.confirm(
+        "Bạn có chắc chắn muốn trả sách này không?"
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+
+        setReturningId(borrowingId);
+
+        setReturnMessage("");
+
+        setReturnError("");
+
+        const response =
+            await returnBorrowingApi(borrowingId);
+
+        setReturnMessage(
+            response.message ||
+            "Trả sách thành công"
+        );
+
+        // Cập nhật lại borrowing vừa trả
+        setBorrowings((currentBorrowings) =>
+            currentBorrowings.map((borrowing) =>
+                borrowing._id === borrowingId
+                    ? {
+                        ...borrowing,
+                        status: "RETURNED",
+                        returnDate:
+                            response.data?.returnDate ||
+                            new Date().toISOString(),
+                        fine:
+                            response.data?.fine ||
+                            0
+                    }
+                    : borrowing
+            )
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Return book error:",
+            error
+        );
+
+        setReturnError(
+            error.response?.data?.message ||
+            "Không thể trả sách"
+        );
+
+    } finally {
+
+        setReturningId(null);
+
+    }
+};
 
     if (loading) {
 
@@ -202,7 +270,33 @@ function MyBorrowings() {
                                 )}{" "}
                                 VNĐ
                             </p>
+                                {borrowing.status !== "RETURNED" && (
+                                    <button
+                                        onClick={() =>
+                                            handleReturn(borrowing._id)
+                                        }
+                                        disabled={
+                                            returningId === borrowing._id
+                                        }
+                                    >
+                                        {returningId === borrowing._id
+                                            ? "Đang trả..."
+                                            : "Trả sách"
+                                        }
+                                    </button>
+                                )}
 
+                              {returnMessage && (
+                        <p style={{ color: "green" }}>
+                            {returnMessage}
+                        </p>
+                    )}
+
+                    {returnError && (
+                        <p style={{ color: "red" }}>
+                            {returnError}
+                        </p>
+                    )}  
                         </div>
 
                     ))}
