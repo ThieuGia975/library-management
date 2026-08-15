@@ -174,6 +174,17 @@ function MyBorrowings() {
                 ← Quay lại danh sách sách
             </Link>
 
+        {returnMessage && (
+            <p style={{ color: "green" }}>
+                {returnMessage}
+            </p>
+        )}
+
+        {returnError && (
+            <p style={{ color: "red" }}>
+                {returnError}
+            </p>
+        )}
 
             {borrowings.length === 0 ? (
 
@@ -270,33 +281,25 @@ function MyBorrowings() {
                                 )}{" "}
                                 VNĐ
                             </p>
-                                {borrowing.status !== "RETURNED" && (
-                                    <button
-                                        onClick={() =>
-                                            handleReturn(borrowing._id)
-                                        }
-                                        disabled={
-                                            returningId === borrowing._id
-                                        }
-                                    >
-                                        {returningId === borrowing._id
-                                            ? "Đang trả..."
-                                            : "Trả sách"
-                                        }
-                                    </button>
-                                )}
-
-                              {returnMessage && (
-                        <p style={{ color: "green" }}>
-                            {returnMessage}
-                        </p>
+                                {(
+                        borrowing.status === "BORROWED" ||
+                        borrowing.status === "OVERDUE"
+                    ) && (
+                        <button
+                            onClick={() =>
+                                handleReturn(borrowing._id)
+                            }
+                            disabled={
+                                returningId === borrowing._id
+                            }
+                        >
+                            {returningId === borrowing._id
+                                ? "Đang trả..."
+                                : "↩️ Trả sách"
+                            }
+                        </button>
                     )}
-
-                    {returnError && (
-                        <p style={{ color: "red" }}>
-                            {returnError}
-                        </p>
-                    )}  
+  
                         </div>
 
                     ))}
