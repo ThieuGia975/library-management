@@ -17,6 +17,9 @@ import LibrarianDashboard
 import AdminDashboard
     from "./pages/AdminDashboard";
 
+import Books from "./pages/Books";
+
+
 import ProtectedRoute
     from "./components/ProtectedRoute";
 
@@ -83,7 +86,12 @@ function App() {
                         path="/"
                         element={<Home />}
                     />
+                    {/* Danh sách sách */}
 
+                      <Route
+                          path="/books"
+                          element={<Books />}
+                     />
 
                     {/* MEMBER */}
 
