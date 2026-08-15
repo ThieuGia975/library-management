@@ -94,7 +94,7 @@ const updateBook = async (req, res) => {
     }
 };
 
-const deleteBook = async (req, res) => {
+/*const deleteBook = async (req, res) => {
     try {
         await bookService.deleteBook(req.params.id);
 
@@ -107,6 +107,30 @@ const deleteBook = async (req, res) => {
             success: false,
             message: error.message
         });
+    }
+};*/
+const deleteBook = async (req, res) => {
+
+    try {
+
+        const book =
+            await bookService.deleteBook(
+                req.params.id
+            );
+
+        res.json({
+            success: true,
+            message: "Book deactivated successfully",
+            data: book
+        });
+
+    } catch (error) {
+
+        res.status(400).json({
+            success: false,
+            message: error.message
+        });
+
     }
 };
 

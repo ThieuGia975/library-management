@@ -236,11 +236,16 @@ const updateBook = async (bookId, data) => {
     return await book.save();
 };
 
-const deleteBook = async (id) => {
-    const book = await Book.findById(id);
+const deleteBook = async (bookId) => {
+
+    const book = await Book.findById(bookId);
 
     if (!book) {
         throw new Error("Book not found");
+    }
+
+    if (!book.isActive) {
+        throw new Error("Book is already inactive");
     }
 
     book.isActive = false;
