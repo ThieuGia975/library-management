@@ -21,6 +21,80 @@ const createBorrowing = async (req, res) => {
     }
 };
 
+const getAllBorrowings = async (req, res) => {
+    try {
+
+        const borrowings =
+            await borrowingService.getAllBorrowings();
+
+        res.status(200).json({
+            success: true,
+            data: borrowings
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
+};
+
+
+const returnBorrowing = async (req, res) => {
+    try {
+
+        const borrowing =
+            await borrowingService.returnBorrowing(
+                req.params.id,
+                req.user
+            );
+
+        res.status(200).json({
+            success: true,
+            message: "Book returned successfully",
+            data: borrowing
+        });
+
+    } catch (error) {
+
+        res.status(400).json({
+            success: false,
+            message: error.message
+        });
+
+    }
+};
+
+const getMyBorrowings = async (req, res) => {
+    try {
+
+        const borrowings =
+            await borrowingService.getMyBorrowings(
+                req.user.userId
+            );
+
+        res.status(200).json({
+            success: true,
+            data: borrowings
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
+};
+
+
 module.exports = {
-    createBorrowing
+    createBorrowing,
+    getAllBorrowings,
+    returnBorrowing,
+    getMyBorrowings
 };

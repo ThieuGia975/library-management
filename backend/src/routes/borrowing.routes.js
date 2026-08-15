@@ -13,4 +13,28 @@ router.post(
     borrowingController.createBorrowing
 );
 
+router.get(
+    "/",
+    authenticate,
+    authorize("ADMIN", "LIBRARIAN"),
+    borrowingController.getAllBorrowings
+);
+
+
+router.get(
+    "/my",
+    authenticate,
+    authorize("MEMBER"),
+    borrowingController.getMyBorrowings
+);
+
+
+router.post(
+    "/:id/return",
+    authenticate,
+    authorize("ADMIN", "LIBRARIAN", "MEMBER"),
+    borrowingController.returnBorrowing
+);
+
+
 module.exports = router;
