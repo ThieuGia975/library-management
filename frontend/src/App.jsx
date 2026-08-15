@@ -1,8 +1,7 @@
 import {
     BrowserRouter,
     Routes,
-    Route,
-    Link
+    Route
 } from "react-router-dom";
 
 import Login from "./pages/Login";
@@ -21,6 +20,10 @@ import AdminDashboard
 import ProtectedRoute
     from "./components/ProtectedRoute";
 
+import MainLayout
+    from "./layouts/MainLayout";
+
+
 function Home() {
 
     return (
@@ -31,22 +34,14 @@ function Home() {
             </h1>
 
             <p>
-                Trang chủ
+                Chào mừng bạn đến với hệ thống
+                quản lý thư viện.
             </p>
-
-            <Link to="/login">
-                Đăng nhập
-            </Link>
-
-            <br />
-
-            <Link to="/register">
-                Đăng ký
-            </Link>
 
         </div>
     );
 }
+
 
 function App() {
 
@@ -56,12 +51,9 @@ function App() {
 
             <Routes>
 
-                {/* Public routes */}
-
-                <Route
-                    path="/"
-                    element={<Home />}
-                />
+                {/* =========================
+                    Public pages
+                ========================== */}
 
                 <Route
                     path="/login"
@@ -79,69 +71,85 @@ function App() {
                 />
 
 
-                {/* MEMBER */}
+                {/* =========================
+                    Main Layout
+                ========================== */}
 
                 <Route
-                    element={
-                        <ProtectedRoute
-                            allowedRoles={[
-                                "MEMBER"
-                            ]}
-                        />
-                    }
+                    element={<MainLayout />}
                 >
 
                     <Route
-                        path="/member"
-                        element={
-                            <MemberDashboard />
-                        }
+                        path="/"
+                        element={<Home />}
                     />
 
-                </Route>
 
-
-                {/* LIBRARIAN */}
-
-                <Route
-                    element={
-                        <ProtectedRoute
-                            allowedRoles={[
-                                "LIBRARIAN",
-                                "ADMIN"
-                            ]}
-                        />
-                    }
-                >
+                    {/* MEMBER */}
 
                     <Route
-                        path="/librarian"
                         element={
-                            <LibrarianDashboard />
+                            <ProtectedRoute
+                                allowedRoles={[
+                                    "MEMBER"
+                                ]}
+                            />
                         }
-                    />
+                    >
 
-                </Route>
-
-
-                {/* ADMIN */}
-
-                <Route
-                    element={
-                        <ProtectedRoute
-                            allowedRoles={[
-                                "ADMIN"
-                            ]}
+                        <Route
+                            path="/member"
+                            element={
+                                <MemberDashboard />
+                            }
                         />
-                    }
-                >
+
+                    </Route>
+
+
+                    {/* LIBRARIAN */}
 
                     <Route
-                        path="/admin"
                         element={
-                            <AdminDashboard />
+                            <ProtectedRoute
+                                allowedRoles={[
+                                    "LIBRARIAN",
+                                    "ADMIN"
+                                ]}
+                            />
                         }
-                    />
+                    >
+
+                        <Route
+                            path="/librarian"
+                            element={
+                                <LibrarianDashboard />
+                            }
+                        />
+
+                    </Route>
+
+
+                    {/* ADMIN */}
+
+                    <Route
+                        element={
+                            <ProtectedRoute
+                                allowedRoles={[
+                                    "ADMIN"
+                                ]}
+                            />
+                        }
+                    >
+
+                        <Route
+                            path="/admin"
+                            element={
+                                <AdminDashboard />
+                            }
+                        />
+
+                    </Route>
 
                 </Route>
 
