@@ -711,7 +711,7 @@ node_modules/
 
 **Loại dự án:** Đồ án kết thúc môn
 
-**Nền tảng:** Web Application
+**Nền tảng:** Web Application + Docker
 
 **Frontend:** React + Vite
 
