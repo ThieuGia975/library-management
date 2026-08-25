@@ -6,6 +6,7 @@ const authorize = require("../middleware/role.middleware");
 
 const router = express.Router();
 
+// Tạo phiếu mượn
 router.post(
     "/",
     authenticate,
@@ -13,6 +14,8 @@ router.post(
     borrowingController.createBorrowing
 );
 
+// Lấy tất cả phiếu mượn
+// ADMIN và LIBRARIAN được phép
 router.get(
     "/",
     authenticate,
@@ -20,7 +23,7 @@ router.get(
     borrowingController.getAllBorrowings
 );
 
-
+// Lấy phiếu mượn của chính MEMBER
 router.get(
     "/my",
     authenticate,
@@ -28,13 +31,12 @@ router.get(
     borrowingController.getMyBorrowings
 );
 
-
+// Trả sách
 router.post(
     "/:id/return",
     authenticate,
     authorize("ADMIN", "LIBRARIAN", "MEMBER"),
     borrowingController.returnBorrowing
 );
-
 
 module.exports = router;

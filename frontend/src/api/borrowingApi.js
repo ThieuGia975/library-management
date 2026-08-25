@@ -1,5 +1,9 @@
-import api from "./axios";
+import api from "./api";
 
+
+// ==========================================
+// BORROW BOOK
+// ==========================================
 
 export const borrowBookApi = async (bookId) => {
 
@@ -14,6 +18,26 @@ export const borrowBookApi = async (bookId) => {
 };
 
 
+// ==========================================
+// GET ALL BORROWINGS
+// ADMIN / LIBRARIAN
+// ==========================================
+
+export const getBorrowingsApi = async () => {
+
+    const response = await api.get(
+        "/borrowings"
+    );
+
+    return response.data;
+};
+
+
+// ==========================================
+// GET MY BORROWINGS
+// MEMBER
+// ==========================================
+
 export const getMyBorrowingsApi = async () => {
 
     const response = await api.get(
@@ -23,17 +47,18 @@ export const getMyBorrowingsApi = async () => {
     return response.data;
 };
 
-export const returnBorrowingApi = async (borrowingId) => {
+
+// ==========================================
+// RETURN BOOK
+// ==========================================
+
+export const returnBorrowingApi = async (
+    borrowingId
+) => {
 
     const response = await api.post(
         `/borrowings/${borrowingId}/return`
     );
-
-    return response.data;
-};
-
-export const getAllBorrowingsApi = async () => {
-    const response = await api.get("/borrowings");
 
     return response.data;
 };

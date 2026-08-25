@@ -15,7 +15,7 @@ router.get(
     "/stats",
     authenticate,
     authorize("ADMIN", "LIBRARIAN"),
-    dashboardController.getStats
+    dashboardController.getDashboardStats
 );
 
 module.exports = router;

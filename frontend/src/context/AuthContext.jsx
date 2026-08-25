@@ -19,7 +19,8 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
 
-        const token = localStorage.getItem("token");
+        const token =
+            localStorage.getItem("token");
 
         if (!token) {
             setLoading(false);
@@ -37,13 +38,9 @@ export const AuthProvider = ({ children }) => {
 
             } catch (error) {
 
-                console.error(
-                    "Failed to load user:",
-                    error
-                );
+                console.error(error);
 
                 localStorage.removeItem("token");
-
                 setUser(null);
 
             } finally {
@@ -57,19 +54,25 @@ export const AuthProvider = ({ children }) => {
 
     }, []);
 
-    const login = async (email, password) => {
+    const login = async (
+        email,
+        password
+    ) => {
 
-        const response = await loginApi({
-            email,
-            password
-        });
+        const response =
+            await loginApi(
+                email,
+                password
+            );
 
         localStorage.setItem(
             "token",
             response.data.token
         );
 
-        setUser(response.data.user);
+        setUser(
+            response.data.user
+        );
 
         return response;
 
@@ -90,7 +93,8 @@ export const AuthProvider = ({ children }) => {
                 loading,
                 login,
                 logout,
-                isAuthenticated: !!user
+                isAuthenticated:
+                    !!user
             }}
         >
             {children}

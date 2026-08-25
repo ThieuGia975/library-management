@@ -1,60 +1,150 @@
-import { Link, Outlet } from "react-router-dom";
-
-import { useAuth } from "../context/AuthContext";
-import Sidebar from "../components/Sidebar";
+import { Link, Outlet, useLocation } from "react-router-dom";
 
 function MainLayout() {
+    const location = useLocation();
 
-    const {
-        user,
-        logout
-    } = useAuth();
+    const menuItems = [
+        {
+            path: "/",
+            label: "Dashboard",
+            icon: "📊"
+        },
+        {
+            path: "/books",
+            label: "Quản lý sách",
+            icon: "📚"
+        },
+        {
+            path: "/borrowings",
+            label: "Phiếu mượn",
+            icon: "📖"
+        },
+        {
+            path: "/users",
+            label: "Người dùng",
+            icon: "👥"
+        }
+    ];
 
     return (
-        <div>
+        <div className="app-layout">
 
-            {/* Header */}
+            {/* SIDEBAR */}
+            <aside className="sidebar">
 
-            <header>
+                <div className="sidebar-logo">
+                    <div className="logo-icon">
+                        📚
+                    </div>
 
-                <Link to="/">
-                    📚 Library Management
-                </Link>
-
-                {user && (
                     <div>
+                        <h2>Library</h2>
+                        <span>Management</span>
+                    </div>
+                </div>
 
-                        <span>
-                            Xin chào, {user.fullName}
-                        </span>
 
-                        {" | "}
+                <nav className="sidebar-menu">
 
-                        <strong>
-                            {user.role}
-                        </strong>
+                    <p className="menu-title">
+                        MENU
+                    </p>
 
-                        {" | "}
+                    {menuItems.map((item) => {
 
-                        <button
-                            onClick={logout}
-                        >
-                            Đăng xuất
-                        </button>
+                        const isActive =
+                            location.pathname === item.path;
+
+                        return (
+                            <Link
+                                key={item.path}
+                                to={item.path}
+                                className={
+                                    isActive
+                                        ? "menu-item active"
+                                        : "menu-item"
+                                }
+                            >
+                                <span className="menu-icon">
+                                    {item.icon}
+                                </span>
+
+                                <span>
+                                    {item.label}
+                                </span>
+                            </Link>
+                        );
+
+                    })}
+
+                </nav>
+
+
+                <div className="sidebar-bottom">
+
+                    <div className="user-box">
+
+                        <div className="user-avatar">
+                            U
+                        </div>
+
+                        <div>
+                            <strong>
+                                Người dùng
+                            </strong>
+
+                            <small>
+                                Thành viên
+                            </small>
+                        </div>
 
                     </div>
-                )}
 
-            </header>
+                </div>
+
+            </aside>
 
 
-            {/* Body */}
+            {/* MAIN */}
+            <div className="main-area">
 
-            <div>
+                {/* HEADER */}
+                <header className="header">
 
-                <Sidebar />
+                    <div>
+                        <h1>
+                            Library Management System
+                        </h1>
 
-                <main>
+                        <p>
+                            Hệ thống quản lý thư viện
+                        </p>
+                    </div>
+
+
+                    <div className="header-user">
+
+                        <div className="header-avatar">
+                            U
+                        </div>
+
+                        <div>
+                            <strong>
+                                Người dùng
+                            </strong>
+
+                            <span>
+                                Thành viên
+                            </span>
+                        </div>
+
+                    </div>
+
+                </header>
+
+
+                {/* CONTENT */}
+                <main className="content">
 
                     <Outlet />
 

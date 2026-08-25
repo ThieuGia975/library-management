@@ -1,23 +1,22 @@
 import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
-import {
-    Link,
-    useParams
-} from "react-router-dom";
-
-import {
-    getBookByIdApi
-} from "../api/bookApi";
+import { getBookByIdApi } from "../api/bookApi";
+import { borrowBookApi } from "../api/borrowingApi";
 
 import { useAuth } from "../context/AuthContext";
 
-import {
-    borrowBookApi
-} from "../api/borrowingApi";
 
 function BookDetail() {
 
     const { id } = useParams();
+    const navigate = useNavigate();
+    const { user } = useAuth();
+
+
+    // ==========================================
+    // STATES
+    // ==========================================
 
     const [book, setBook] = useState(null);
 
@@ -25,151 +24,217 @@ function BookDetail() {
 
     const [error, setError] = useState("");
 
-    const { user } = useAuth();
-
-    console.log("========== AUTH DEBUG ==========");
-    console.log("User:", user);
-    console.log("User role:", user?.role);
-    console.log("Is MEMBER:", user?.role === "MEMBER");
-    console.log("Token:", localStorage.getItem("token"));
-    console.log("================================");
-
     const [borrowing, setBorrowing] = useState(false);
 
-    const [borrowMessage, setBorrowMessage] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
 
-    const [borrowError, setBorrowError] = useState("");
 
+    // ==========================================
+    // LOAD BOOK
+    // ==========================================
+
+    const loadBook = async () => {
+
+        try {
+
+            setLoading(true);
+            setError("");
+
+            const response = await getBookByIdApi(id);
+
+            setBook(response?.data || null);
+
+        } catch (error) {
+
+            console.error(
+                "Load book detail error:",
+                error
+            );
+
+            setError(
+                error.response?.data?.message ||
+                "Không thể tải thông tin sách"
+            );
+
+        } finally {
+
+            setLoading(false);
+
+        }
+    };
+
+
+    // ==========================================
+    // LOAD WHEN PAGE OPENS
+    // ==========================================
 
     useEffect(() => {
 
-        const loadBook = async () => {
-
-            try {
-
-                setLoading(true);
-
-                setError("");
-
-                const response =
-                    await getBookByIdApi(id);
-
-                setBook(response.data);
-
-            } catch (error) {
-
-                console.error(
-                    "Failed to load book:",
-                    error
-                );
-
-                setError(
-                    error.response?.data?.message ||
-                    "Không thể tải thông tin sách"
-                );
-
-            } finally {
-
-                setLoading(false);
-
-            }
-        };
-
-        loadBook();
+        if (id) {
+            loadBook();
+        }
 
     }, [id]);
 
-    const handleBorrow = async () => {
 
-    try {
+    // ==========================================
+    // BORROW BOOK
+    // ==========================================
 
-        setBorrowing(true);
+    const handleBorrowBook = async () => {
 
-        setBorrowMessage("");
+        if (!user) {
 
-        setBorrowError("");
+            navigate("/login");
 
-        const response =
+            return;
+        }
+
+
+        if (user.role !== "MEMBER") {
+
+            setError(
+                "Chỉ thành viên mới có thể mượn sách."
+            );
+
+            return;
+        }
+
+
+        if (
+            !book ||
+            Number(book.availableQuantity || 0) <= 0
+        ) {
+
+            setError("Sách hiện đã hết.");
+
+            return;
+        }
+
+
+        try {
+
+            setBorrowing(true);
+
+            setError("");
+            setSuccessMessage("");
+
+
             await borrowBookApi(book._id);
 
-        setBorrowMessage(
-            response.message ||
-            "Mượn sách thành công"
-        );
 
-        // Cập nhật số lượng sách
-        setBook((currentBook) => ({
-            ...currentBook,
+            setSuccessMessage(
+                "Mượn sách thành công! Hạn trả là 7 ngày kể từ ngày mượn."
+            );
 
-            availableQuantity:
-                currentBook.availableQuantity - 1
-        }));
 
-    } catch (error) {
+            await loadBook();
 
-        console.error(
-            "Borrow book error:",
-            error
-        );
+        } catch (error) {
 
-        setBorrowError(
-            error.response?.data?.message ||
-            "Không thể mượn sách"
-        );
+            console.error(
+                "Borrow book error:",
+                error
+            );
 
-    } finally {
+            setError(
+                error.response?.data?.message ||
+                "Không thể mượn sách"
+            );
 
-        setBorrowing(false);
+        } finally {
 
-    }
-};
+            setBorrowing(false);
+
+        }
+    };
+
+
+    // ==========================================
+    // LOADING
+    // ==========================================
 
     if (loading) {
 
         return (
-            <div>
-                Đang tải thông tin sách...
+            <div className="page-container">
+
+                <div className="loading-card">
+
+                    <div className="loading-spinner"></div>
+
+                    <p>
+                        Đang tải thông tin sách...
+                    </p>
+
+                </div>
+
             </div>
         );
 
     }
 
 
-    if (error) {
+    // ==========================================
+    // ERROR
+    // ==========================================
+
+    if (error && !book) {
 
         return (
-            <div>
+            <div className="page-container">
 
-                <h2>
-                    Không thể tải sách
-                </h2>
-
-                <p style={{ color: "red" }}>
-                    {error}
-                </p>
-
-                <Link to="/books">
+                <button
+                    type="button"
+                    className="back-button"
+                    onClick={() => navigate("/books")}
+                >
                     ← Quay lại danh sách sách
-                </Link>
+                </button>
+
+                <div className="error-box">
+                    {error}
+                </div>
 
             </div>
         );
 
     }
 
+
+    // ==========================================
+    // BOOK NOT FOUND
+    // ==========================================
 
     if (!book) {
 
         return (
-            <div>
+            <div className="page-container">
 
-                <h2>
-                    Không tìm thấy sách
-                </h2>
-
-                <Link to="/books">
+                <button
+                    type="button"
+                    className="back-button"
+                    onClick={() => navigate("/books")}
+                >
                     ← Quay lại danh sách sách
-                </Link>
+                </button>
+
+                <div className="empty-state">
+
+                    <div className="empty-icon">
+                        📚
+                    </div>
+
+                    <h3>
+                        Không tìm thấy sách
+                    </h3>
+
+                    <p>
+                        Sách bạn đang tìm kiếm
+                        không tồn tại.
+                    </p>
+
+                </div>
 
             </div>
         );
@@ -177,141 +242,350 @@ function BookDetail() {
     }
 
 
+    // ==========================================
+    // BOOK DATA
+    // ==========================================
+
+    const quantity =
+        Number(book.quantity || 0);
+
+    const available =
+        Number(book.availableQuantity || 0);
+
+    const borrowed =
+        Math.max(quantity - available, 0);
+
+    const isAvailable =
+        available > 0;
+
+    const canBorrow =
+        user?.role === "MEMBER";
+
+
+    // ==========================================
+    // PAGE
+    // ==========================================
+
     return (
 
-        <div>
+        <div className="page-container">
 
-            <Link to="/books">
+            {/* BACK BUTTON */}
+
+            <button
+                type="button"
+                className="back-button"
+                onClick={() => navigate("/books")}
+            >
                 ← Quay lại danh sách sách
-            </Link>
+            </button>
 
 
-            <h1>
-                📖 {book.title}
-            </h1>
+            {/* ERROR */}
+
+            {error && (
+                <div className="error-box">
+                    {error}
+                </div>
+            )}
 
 
-            <div>
+            {/* SUCCESS */}
 
-                <p>
-                    <strong>
-                        Tác giả:
-                    </strong>{" "}
-                    {book.author}
-                </p>
-
-
-                <p>
-                    <strong>
-                        ISBN:
-                    </strong>{" "}
-                    {book.isbn}
-                </p>
+            {successMessage && (
+                <div className="success-box">
+                    ✓ {successMessage}
+                </div>
+            )}
 
 
-                <p>
-                    <strong>
-                        Thể loại:
-                    </strong>{" "}
-                    {book.category}
-                </p>
+            {/* ======================================
+                BOOK DETAIL
+            ====================================== */}
+
+            <div className="book-detail-card">
+
+                {/* ==================================
+                    COVER
+                ================================== */}
+
+                <div className="book-detail-cover">
+
+                    {book.coverImage ? (
+
+                        <img
+                            src={book.coverImage}
+                            alt={book.title}
+                            onError={(event) => {
+
+                                event.currentTarget.style.display =
+                                    "none";
+
+                                event.currentTarget.nextSibling.style.display =
+                                    "flex";
+
+                            }}
+                        />
+
+                    ) : null}
 
 
-                <p>
-                    <strong>
-                        Nhà xuất bản:
-                    </strong>{" "}
-                    {book.publisher || "N/A"}
-                </p>
+                    <div
+                        className="book-detail-placeholder"
+                        style={{
+                            display: book.coverImage
+                                ? "none"
+                                : "flex"
+                        }}
+                    >
+                        📚
+                    </div>
+
+                </div>
 
 
-                <p>
-                    <strong>
-                        Năm xuất bản:
-                    </strong>{" "}
-                    {book.publishedYear || "N/A"}
-                </p>
+                {/* ==================================
+                    CONTENT
+                ================================== */}
 
+                <div className="book-detail-content">
 
-                <p>
-                    <strong>
-                        Số lượng:
-                    </strong>{" "}
-                    {book.quantity}
-                </p>
+                    {/* HEADER */}
 
+                    <div className="book-detail-header">
 
-                <p>
-                    <strong>
-                        Có sẵn:
-                    </strong>{" "}
-                    {book.availableQuantity}
-                </p>
+                        <span className="category-badge">
+                            {book.category || "Chưa phân loại"}
+                        </span>
 
+                        <h1>
+                            {book.title}
+                        </h1>
 
-                {book.description && (
-
-                    <div>
-
-                        <h3>
-                            Mô tả
-                        </h3>
-
-                        <p>
-                            {book.description}
+                        <p className="book-author">
+                            Tác giả: {book.author}
                         </p>
 
                     </div>
 
-                )}
+
+                    {/* ==================================
+                        INFORMATION
+                    ================================== */}
+
+                    <div className="book-info-grid">
+
+                        <div className="book-info-item">
+
+                            <span>
+                                ISBN
+                            </span>
+
+                            <strong>
+                                {book.isbn || "Chưa cập nhật"}
+                            </strong>
+
+                        </div>
 
 
-            {user?.role === "MEMBER" && (
-                
-                book.availableQuantity > 0 ? (
+                        <div className="book-info-item">
 
-                    <button
-                        onClick={handleBorrow}
-                        disabled={borrowing}
-                    >
+                            <span>
+                                Nhà xuất bản
+                            </span>
 
-                        {borrowing
-                            ? "Đang xử lý..."
-                            : "Mượn sách"}
+                            <strong>
+                                {book.publisher ||
+                                    "Chưa cập nhật"}
+                            </strong>
 
-                    </button>
+                        </div>
 
-                ) : (
 
-                    <p>
-                        Sách hiện đã hết.
-                    </p>
+                        <div className="book-info-item">
 
-                )
+                            <span>
+                                Năm xuất bản
+                            </span>
 
-            )}
+                            <strong>
+                                {book.publishedYear ||
+                                    "Chưa cập nhật"}
+                            </strong>
 
-            {borrowMessage && (
+                        </div>
 
-                    <p style={{ color: "green" }}>
-                        {borrowMessage}
-                    </p>
 
-                )}
+                        <div className="book-info-item">
 
-            {borrowError && (
+                            <span>
+                                Tổng số bản
+                            </span>
 
-                    <p style={{ color: "red" }}>
-                        {borrowError}
-                    </p>
+                            <strong>
+                                {quantity}
+                            </strong>
 
-                )}
+                        </div>
+
+                    </div>
+
+
+                    {/* ==================================
+                        INVENTORY
+                    ================================== */}
+
+                    <div className="availability-box">
+
+                        <div className="availability-item">
+
+                            <span>
+                                Có sẵn
+                            </span>
+
+                            <strong
+                                className={
+                                    isAvailable
+                                        ? "available-number"
+                                        : "unavailable-number"
+                                }
+                            >
+                                {available}
+                            </strong>
+
+                        </div>
+
+
+                        <div className="availability-item">
+
+                            <span>
+                                Đang được mượn
+                            </span>
+
+                            <strong>
+                                {borrowed}
+                            </strong>
+
+                        </div>
+
+
+                        <div className="availability-item">
+
+                            <span>
+                                Trạng thái
+                            </span>
+
+                            {isAvailable ? (
+
+                                <span className="status available">
+                                    Có sẵn
+                                </span>
+
+                            ) : (
+
+                                <span className="status unavailable">
+                                    Hết sách
+                                </span>
+
+                            )}
+
+                        </div>
+
+                    </div>
+
+
+                    {/* ==================================
+                        DESCRIPTION
+                    ================================== */}
+
+                    <div className="book-description">
+
+                        <h3>
+                            Giới thiệu sách
+                        </h3>
+
+                        <p>
+                            {book.description ||
+                                "Chưa có mô tả cho sách này."}
+                        </p>
+
+                    </div>
+
+
+                    {/* ==================================
+                        ACTIONS
+                    ================================== */}
+
+                    <div className="book-detail-actions">
+
+                        {canBorrow && (
+
+                            <button
+                                type="button"
+                                className="primary-button borrow-button"
+                                onClick={handleBorrowBook}
+                                disabled={
+                                    borrowing ||
+                                    !isAvailable
+                                }
+                            >
+
+                                {borrowing
+
+                                    ? "Đang xử lý..."
+
+                                    : isAvailable
+
+                                        ? "📖 Mượn sách"
+
+                                        : "Hết sách"
+
+                                }
+
+                            </button>
+
+                        )}
+
+
+                        {!user && (
+
+                            <button
+                                type="button"
+                                className="primary-button"
+                                onClick={() =>
+                                    navigate("/login")
+                                }
+                            >
+                                Đăng nhập để mượn sách
+                            </button>
+
+                        )}
+
+
+                        {(user?.role === "ADMIN" ||
+                            user?.role === "LIBRARIAN") && (
+
+                            <button
+                                type="button"
+                                className="secondary-button"
+                                onClick={() =>
+                                    navigate("/books")
+                                }
+                            >
+                                ← Quản lý sách
+                            </button>
+
+                        )}
+
+                    </div>
+
+                </div>
 
             </div>
 
         </div>
-
     );
 }
+
 
 export default BookDetail;

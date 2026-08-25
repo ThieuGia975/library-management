@@ -1,68 +1,101 @@
-import { Link } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 function Sidebar() {
 
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
+    const navigate = useNavigate();
 
-    if (!user) {
-        return null;
-    }
+    const handleLogout = () => {
+
+        logout();
+
+        navigate("/login");
+    };
 
     return (
-        <aside>
+        <aside className="sidebar">
 
-            <h3>
-                Menu
-            </h3>
+            <div className="logo">
+
+                <div className="logo-icon">
+                    📚
+                </div>
+
+                <div>
+                    <h2>Library</h2>
+                    <span>Management</span>
+                </div>
+
+            </div>
+
+
+            <div className="menu-title">
+                MENU
+            </div>
+
 
             <nav>
 
-                <div>
-                    <Link to="/">
-                        🏠 Trang chủ
-                    </Link>
-                </div>
-
-                <div>
-                    <Link to="/books">
-                        📚 Sách
-                    </Link>
-                </div>
+                <NavLink to="/">
+                    📊
+                    <span>Dashboard</span>
+                </NavLink>
 
 
-                {user.role === "MEMBER" && (
-                    <div>
-                        <Link to="/member">
-                            👤 Trang thành viên
-                        </Link>
-                    </div>
-                )}
+                <NavLink to="/books">
+                    📚
+                    <span>Quản lý sách</span>
+                </NavLink>
 
 
-                {(user.role === "LIBRARIAN" ||
-                    user.role === "ADMIN") && (
-
-                    <div>
-                        <Link to="/librarian">
-                            📖 Thủ thư
-                        </Link>
-                    </div>
-
-                )}
+                <NavLink to="/borrowings">
+                    📖
+                    <span>Phiếu mượn</span>
+                </NavLink>
 
 
-                {user.role === "ADMIN" && (
-
-                    <div>
-                        <Link to="/admin">
-                            ⚙️ Quản trị
-                        </Link>
-                    </div>
-
+                {user?.role === "ADMIN" && (
+                    <NavLink to="/users">
+                        👥
+                        <span>Người dùng</span>
+                    </NavLink>
                 )}
 
             </nav>
+
+
+            <div className="sidebar-bottom">
+
+                <div className="user-mini">
+
+                    <div className="avatar">
+                        {user?.fullName?.charAt(0).toUpperCase()}
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            {user?.fullName}
+                        </strong>
+
+                        <small>
+                            {user?.role}
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    className="logout-button"
+                    onClick={handleLogout}
+                >
+                    🚪 Đăng xuất
+                </button>
+
+            </div>
 
         </aside>
     );

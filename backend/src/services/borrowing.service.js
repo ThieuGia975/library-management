@@ -2,10 +2,25 @@ const Borrowing = require("../models/Borrowing");
 const User = require("../models/User");
 const Book = require("../models/Book");
 
+/**
+ * Tạo phiếu mượn sách
+ *
+ * Quy tắc:
+ * - User phải tồn tại và đang hoạt động.
+ * - Book phải tồn tại và đang hoạt động.
+ * - Sách phải còn số lượng.
+ * - Một user không được mượn cùng một sách
+ *   khi phiếu cũ vẫn BORROWED hoặc OVERDUE.
+ * - Thời hạn mượn mặc định là 7 ngày.
+ */
 const createBorrowing = async ({
     userId,
     bookId
 }) => {
+
+    // =========================
+    // 1. KIỂM TRA USER
+    // =========================
 
     const user = await User.findOne({
         _id: userId,
@@ -16,6 +31,11 @@ const createBorrowing = async ({
         throw new Error("User not found");
     }
 
+
+    // =========================
+    // 2. KIỂM TRA BOOK
+    // =========================
+
     const book = await Book.findOne({
         _id: bookId,
         isActive: true
@@ -25,17 +45,28 @@ const createBorrowing = async ({
         throw new Error("Book not found");
     }
 
+
+    // =========================
+    // 3. KIỂM TRA SỐ LƯỢNG
+    // =========================
+
     if (book.availableQuantity <= 0) {
         throw new Error("Book is not available");
     }
 
-    const existingBorrowing = await Borrowing.findOne({
-        user: userId,
-        book: bookId,
-        status: {
-            $in: ["BORROWED", "OVERDUE"]
-        }
-    });
+
+    // =========================
+    // 4. KIỂM TRA ĐÃ MƯỢN CHƯA
+    // =========================
+
+    const existingBorrowing =
+        await Borrowing.findOne({
+            user: userId,
+            book: bookId,
+            status: {
+                $in: ["BORROWED", "OVERDUE"]
+            }
+        });
 
     if (existingBorrowing) {
         throw new Error(
@@ -43,28 +74,53 @@ const createBorrowing = async ({
         );
     }
 
-    // Ngày mượn
+
+    // =========================
+    // 5. NGÀY MƯỢN
+    // =========================
+
     const borrowDate = new Date();
 
-    // Hạn trả: 7 ngày kể từ ngày mượn
+
+    // =========================
+    // 6. HẠN TRẢ
+    // Mặc định 7 ngày
+    // =========================
+
     const dueDate = new Date(borrowDate);
 
     dueDate.setDate(
         dueDate.getDate() + 7
     );
 
-    const borrowing = await Borrowing.create({
-        user: userId,
-        book: bookId,
-        borrowDate,
-        dueDate,
-        status: "BORROWED"
-    });
 
-    // Giảm số sách có thể mượn
+    // =========================
+    // 7. TẠO PHIẾU MƯỢN
+    // =========================
+
+    const borrowing =
+        await Borrowing.create({
+            user: userId,
+            book: bookId,
+            borrowDate,
+            dueDate,
+            status: "BORROWED",
+            fine: 0
+        });
+
+
+    // =========================
+    // 8. GIẢM SỐ SÁCH CÓ SẴN
+    // =========================
+
     book.availableQuantity -= 1;
 
     await book.save();
+
+
+    // =========================
+    // 9. TRẢ VỀ PHIẾU MƯỢN
+    // =========================
 
     return await Borrowing.findById(
         borrowing._id
@@ -80,7 +136,19 @@ const createBorrowing = async ({
 };
 
 
+/**
+ * Lấy toàn bộ phiếu mượn
+ *
+ * Dành cho:
+ * - ADMIN
+ * - LIBRARIAN
+ *
+ * Trước khi lấy dữ liệu sẽ cập nhật
+ * các phiếu BORROWED đã quá hạn thành OVERDUE.
+ */
 const getAllBorrowings = async () => {
+
+    await updateOverdueBorrowings();
 
     return await Borrowing.find()
         .populate(
@@ -96,100 +164,189 @@ const getAllBorrowings = async () => {
         });
 };
 
+
+/**
+ * Trả sách
+ *
+ * Quy tắc:
+ * - Phiếu phải tồn tại.
+ * - MEMBER chỉ được trả sách của chính mình.
+ * - ADMIN và LIBRARIAN có thể trả tất cả.
+ * - Không được trả một phiếu đã RETURNED.
+ * - Nếu quá hạn sẽ tính tiền phạt.
+ * - Sau khi trả sách, availableQuantity tăng lên.
+ */
 const returnBorrowing = async (
     borrowingId,
     currentUser
 ) => {
 
-    // 1. Tìm borrowing
-    const borrowing = await Borrowing.findById(
-        borrowingId
-    );
+    // =========================
+    // 1. TÌM PHIẾU MƯỢN
+    // =========================
+
+    const borrowing =
+        await Borrowing.findById(
+            borrowingId
+        );
 
     if (!borrowing) {
-        throw new Error("Borrowing not found");
+        throw new Error(
+            "Borrowing not found"
+        );
     }
 
-    // 2. MEMBER chỉ được trả sách của mình
+
+    // =========================
+    // 2. KIỂM TRA QUYỀN MEMBER
+    // =========================
+
     if (
         currentUser.role === "MEMBER" &&
-        borrowing.user.toString() !== currentUser.userId
+        borrowing.user.toString() !==
+            currentUser.userId.toString()
     ) {
+
         throw new Error(
             "You can only return your own borrowing"
         );
     }
 
-    // 3. Kiểm tra đã trả chưa
-    if (borrowing.status === "RETURNED") {
+
+    // =========================
+    // 3. KIỂM TRA ĐÃ TRẢ CHƯA
+    // =========================
+
+    if (
+        borrowing.status === "RETURNED"
+    ) {
+
         throw new Error(
             "This book has already been returned"
         );
     }
 
-    // 4. Tìm book
-    const book = await Book.findById(
-        borrowing.book
-    );
 
-    if (!book) {
-        throw new Error("Book not found");
-    }
+    // =========================
+    // 4. TÌM SÁCH
+    // =========================
 
-    // 5. Ngày trả
-    const returnDate = new Date();
-
-    // 6. Tính tiền phạt
-   let fine = 0;
-
-    if (returnDate > borrowing.dueDate) {
-
-      /*  const diffTime =
-            returnDate.getTime() -
-            borrowing.dueDate.getTime();
-
-        const overdueDays = Math.ceil(
-            diffTime /
-            (1000 * 60 * 60 * 24)
-        ); */
-        const dueDate = new Date(borrowing.dueDate);
-        const returnDate = new Date();
-
-        dueDate.setHours(0, 0, 0, 0);
-        returnDate.setHours(0, 0, 0, 0);
-
-        const diffTime =
-            returnDate.getTime() -
-            dueDate.getTime();
-
-        const overdueDays = Math.max(
-            0,
-            Math.floor(
-                diffTime /
-                (1000 * 60 * 60 * 24)
-            )
+    const book =
+        await Book.findById(
+            borrowing.book
         );
 
-//
-        const finePerDay =
-            Number(process.env.FINE_PER_DAY || 10000);
-
-        fine = overdueDays * finePerDay;
+    if (!book) {
+        throw new Error(
+            "Book not found"
+        );
     }
 
-    // 7. Cập nhật borrowing
-    borrowing.returnDate = returnDate;
-    borrowing.status = "RETURNED";
-    borrowing.fine = fine;
+
+    // =========================
+    // 5. NGÀY TRẢ
+    // =========================
+
+    const returnDate = new Date();
+
+
+    // =========================
+    // 6. TÍNH TIỀN PHẠT
+    // =========================
+
+    let fine = 0;
+
+    if (
+        returnDate > borrowing.dueDate
+    ) {
+
+        const dueDate =
+            new Date(
+                borrowing.dueDate
+            );
+
+        const returnDateOnly =
+            new Date(returnDate);
+
+
+        // Chỉ so sánh ngày,
+        // không so sánh giờ/phút/giây.
+
+        dueDate.setHours(
+            0,
+            0,
+            0,
+            0
+        );
+
+        returnDateOnly.setHours(
+            0,
+            0,
+            0,
+            0
+        );
+
+
+        const diffTime =
+            returnDateOnly.getTime() -
+            dueDate.getTime();
+
+
+        const overdueDays =
+            Math.max(
+                0,
+                Math.floor(
+                    diffTime /
+                    (1000 * 60 * 60 * 24)
+                )
+            );
+
+
+        const finePerDay =
+            Number(
+                process.env.FINE_PER_DAY || 10000
+            );
+
+
+        fine =
+            overdueDays *
+            finePerDay;
+    }
+
+
+    // =========================
+    // 7. CẬP NHẬT PHIẾU MƯỢN
+    // =========================
+
+    borrowing.returnDate =
+        returnDate;
+
+    borrowing.status =
+        "RETURNED";
+
+    borrowing.fine =
+        fine;
 
     await borrowing.save();
 
-    // 8. Tăng số lượng sách có thể mượn
-    book.availableQuantity += 1;
+
+    // =========================
+    // 8. TĂNG SỐ LƯỢNG SÁCH
+    // =========================
+
+    book.availableQuantity =
+        Math.min(
+            book.availableQuantity + 1,
+            book.quantity
+        );
 
     await book.save();
 
-    // 9. Trả dữ liệu
+
+    // =========================
+    // 9. TRẢ DỮ LIỆU
+    // =========================
+
     return await Borrowing.findById(
         borrowing._id
     )
@@ -203,7 +360,21 @@ const returnBorrowing = async (
         );
 };
 
-const getMyBorrowings = async (userId) => {
+
+/**
+ * Lấy danh sách phiếu mượn
+ * của MEMBER hiện tại.
+ */
+const getMyBorrowings = async (
+    userId
+) => {
+
+    // Cập nhật phiếu quá hạn trước
+    // để frontend luôn nhận trạng thái mới nhất.
+
+    await updateOverdueBorrowings();
+
+
     return await Borrowing.find({
         user: userId
     })
@@ -216,27 +387,39 @@ const getMyBorrowings = async (userId) => {
         });
 };
 
-const updateOverdueBorrowings = async () => {
 
-    const now = new Date();
+/**
+ * Cập nhật trạng thái phiếu mượn quá hạn.
+ *
+ * BORROWED + dueDate < hiện tại
+ *        ↓
+ * OVERDUE
+ */
+const updateOverdueBorrowings =
+    async () => {
 
-    const result =
-        await Borrowing.updateMany(
-            {
-                status: "BORROWED",
-                dueDate: {
-                    $lt: now
+        const now =
+            new Date();
+
+
+        const result =
+            await Borrowing.updateMany(
+                {
+                    status: "BORROWED",
+                    dueDate: {
+                        $lt: now
+                    }
+                },
+                {
+                    $set: {
+                        status: "OVERDUE"
+                    }
                 }
-            },
-            {
-                $set: {
-                    status: "OVERDUE"
-                }
-            }
-        );
+            );
 
-    return result;
-};
+
+        return result;
+    };
 
 
 module.exports = {

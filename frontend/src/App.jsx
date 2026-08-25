@@ -1,68 +1,25 @@
-import MyBorrowings from "./pages/MyBorrowings";
-
 import {
     BrowserRouter,
     Routes,
     Route
 } from "react-router-dom";
 
+import Layout from "./components/Layout";
+
 import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Unauthorized from "./pages/Unauthorized";
-
-import MemberDashboard
-    from "./pages/MemberDashboard";
-
-import LibrarianDashboard
-    from "./pages/LibrarianDashboard";
-
-import AdminDashboard
-    from "./pages/AdminDashboard";
-
+import Dashboard from "./pages/Dashboard";
 import Books from "./pages/Books";
-
-
-import ProtectedRoute
-    from "./components/ProtectedRoute";
-
-import MainLayout
-    from "./layouts/MainLayout";
-
- import BookDetail from "./pages/BookDetail";
-
- import LibrarianBorrowings
-    from "./pages/LibrarianBorrowings";
-
-function Home() {
-
-    return (
-        <div>
-
-            <h1>
-                Library Management System
-            </h1>
-
-            <p>
-                Chào mừng bạn đến với hệ thống
-                quản lý thư viện.
-            </p>
-
-        </div>
-    );
-}
-
+import Borrowings from "./pages/Borrowings";
+import Users from "./pages/Users";
+import BookDetail from "./pages/BookDetail";
+import Register from "./pages/Register";
 
 function App() {
 
     return (
-
         <BrowserRouter>
 
             <Routes>
-
-                {/* =========================
-                    Public pages
-                ========================== */}
 
                 <Route
                     path="/login"
@@ -73,116 +30,36 @@ function App() {
                     path="/register"
                     element={<Register />}
                 />
-
                 <Route
-                    path="/unauthorized"
-                    element={<Unauthorized />}
-                />
-
-
-                {/* =========================
-                    Main Layout
-                ========================== */}
-
-                <Route
-                    element={<MainLayout />}
+                    path="/"
+                    element={<Layout />}
                 >
 
                     <Route
-                        path="/"
-                        element={<Home />}
+                        index
+                        element={<Dashboard />}
                     />
-                    {/* Danh sách sách */}
-
-                      <Route
-                          path="/books"
-                          element={<Books />}
-                     />
-
-                     <Route
-                          path="/books/:id"
-                          element={<BookDetail />}
-                      />
-
-                    {/* MEMBER */}
 
                     <Route
-                        element={
-                            <ProtectedRoute
-                                allowedRoles={[
-                                    "MEMBER"
-                                ]}
-                            />
-                        }
-                    >
-
-                        <Route
-                            path="/member"
-                            element={
-                                <MemberDashboard />
-                            }
-                        />
-
-                        <Route
-                            path="/my-borrowings"
-                            element={
-                                <MyBorrowings />
-                            }
-                        />
-
-                    </Route>
-
-
-                    {/* LIBRARIAN */}
-
-                     <Route
-                      element={
-                          <ProtectedRoute
-                              allowedRoles={[
-                                  "LIBRARIAN",
-                                  "ADMIN"
-                              ]}
-                          />
-                      }
-                  >
-
-                      <Route
-                          path="/librarian"
-                          element={
-                              <LibrarianDashboard />
-                          }
-                      />
-
-                      <Route
-                          path="/librarian/borrowings"
-                          element={
-                              <LibrarianBorrowings />
-                          }
-                      />
-
-                  </Route>
-
-
-                    {/* ADMIN */}
+                        path="books"
+                        element={<Books />}
+                    />
 
                     <Route
-                        element={
-                            <ProtectedRoute
-                                allowedRoles={[
-                                    "ADMIN"
-                                ]}
-                            />
-                        }
-                    >
+                        path="books/:id"
+                        element={<BookDetail />}
+                    />
 
-                        <Route
-                            path="/admin"
-                            element={
-                                <AdminDashboard />
-                            }
-                        />
+                    <Route
+                        path="borrowings"
+                        element={<Borrowings />}
+                    />
 
-                    </Route>
+                    <Route
+                        path="users"
+                        element={<Users />}
+                    />
+
 
                 </Route>
 

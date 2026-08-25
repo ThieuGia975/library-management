@@ -1,28 +1,48 @@
 const dashboardService =
     require("../services/dashboard.service");
 
-const getStats = async (req, res) => {
+
+const getDashboardStats = async (
+    req,
+    res
+) => {
 
     try {
 
         const stats =
-            await dashboardService.getStats();
+            await dashboardService
+                .getDashboardStats();
 
-        res.status(200).json({
+
+        return res.status(200).json({
+
             success: true,
+
             data: stats
+
         });
 
     } catch (error) {
 
-        res.status(500).json({
+        console.error(
+            "Dashboard stats error:",
+            error
+        );
+
+        return res.status(500).json({
+
             success: false,
-            message: error.message
+
+            message:
+                "Không thể lấy thống kê dashboard"
+
         });
 
     }
+
 };
 
+
 module.exports = {
-    getStats
+    getDashboardStats
 };
